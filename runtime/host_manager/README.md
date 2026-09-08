@@ -69,7 +69,7 @@ backend capability and quality validation remain separate requirements.
 Both services can wrap their **resident model process** with the same supervisor:
 
 ```sh
-python /opt/netix/host_manager/supervisor.py \
+netix-runtime-supervisor \
   --config /etc/netix/host-resources.json \
   --owner foundry:model-digest \
   --host-bytes 1000000000 --gpu-bytes 8000000000 \
