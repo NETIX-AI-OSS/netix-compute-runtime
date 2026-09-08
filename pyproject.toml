@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=80", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netix-compute-runtime"
+version = "0.1.0"
+description = "Model-independent GPU worker resource admission and process supervision"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+readme = "README.md"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/NETIX-AI-OSS/netix-compute-runtime"
+
+[project.scripts]
+netix-runtime-supervisor = "runtime.host_manager.supervisor:main"
+
+[tool.setuptools.packages.find]
+include = ["netix_compute_runtime*", "runtime.host_manager*"]
