@@ -12,7 +12,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   audit:
-    runs-on: [build-only, Linux, X64]
+    runs-on:
+      group: e2e-worker
+      labels: [build-only, Linux, X64]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -38,7 +40,9 @@ jobs:
               assert path.suffix not in {'.safetensors', '.gguf', '.pt', '.pem', '.key'}, path
           PYTHON
   tests:
-    runs-on: [build-only, Linux, X64]
+    runs-on:
+      group: e2e-worker
+      labels: [build-only, Linux, X64]
     strategy:
       matrix:
         python: ['3.11', '3.12', '3.13', '3.14']
@@ -63,7 +67,7 @@ jobs:
   image:
     needs: [audit, tests]
     runs-on:
-      group: default
+      group: e2e-worker
       labels: [build-only, Linux, X64]
     permissions:
       contents: read
@@ -128,7 +132,9 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [image]
-    runs-on: [build-only, Linux, X64]
+    runs-on:
+      group: e2e-worker
+      labels: [build-only, Linux, X64]
     permissions:
       contents: write
       id-token: write
