@@ -22,11 +22,11 @@ jobs:
           persist-credentials: false
       - name: Install checksum-pinned secret scanner
         run: |
-          curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o "$RUNNER_TEMP/gitleaks.tar.gz"
-          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check --strict
-          mkdir "$RUNNER_TEMP/netix-gitleaks"
-          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP/netix-gitleaks"
-          echo "$RUNNER_TEMP/netix-gitleaks" >> "$GITHUB_PATH"
+          SCANNER_DIR=$(mktemp -d "$RUNNER_TEMP/netix-gitleaks.XXXXXX")
+          curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o "$SCANNER_DIR/gitleaks.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $SCANNER_DIR/gitleaks.tar.gz" | sha256sum --check --strict
+          tar -xzf "$SCANNER_DIR/gitleaks.tar.gz" -C "$SCANNER_DIR"
+          echo "$SCANNER_DIR" >> "$GITHUB_PATH"
       - run: gitleaks git --redact=100 --log-opts=--all .
       - name: Check public ownership boundary
         run: |
