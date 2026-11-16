@@ -2,7 +2,7 @@
 
 | Component | Coverage |
 | --- | --- |
-| Admission locks and supervisor | Linux; Python 3.11–3.14 CI |
+| Admission locks and supervisor | Linux; Python 3.11-3.14 CI |
 | Process wait/cancellation | Python standard library |
 | Vulkan device probe | Linux Vulkan loader; enumerates physical devices and memory metadata |
 | Public base image | Linux amd64 initially |

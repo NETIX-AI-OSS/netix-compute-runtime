@@ -41,7 +41,7 @@ to a worker does not move its implementation or data into the public library.
 
 ## Get started
 
-Use Python 3.11–3.14 on Linux. Download and verify a release before installation:
+Use Python 3.11-3.14 on Linux. Download and verify a release before installation:
 
 ```sh
 gh release download v0.1.0 --repo NETIX-AI-OSS/netix-compute-runtime \
