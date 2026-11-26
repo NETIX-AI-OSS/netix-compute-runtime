@@ -83,21 +83,25 @@ jobs:
           PY314: ${{ steps.py314.outputs.python-path }}
         run: |
           for interpreter in "$PY311" "$PY312" "$PY313" "$PY314"; do
-            test_dir=$(mktemp -d "$RUNNER_TEMP/netix-runtime.XXXXXX")
-            echo "::group::$("$interpreter" --version)"
-            "$interpreter" -m venv "$test_dir/venv"
             (
+              # setup-python normally adds this to the job environment. Here
+              # each interpreter gets its own library path and virtualenv.
+              python_root=$(dirname "$(dirname "$interpreter")")
+              export LD_LIBRARY_PATH="$python_root/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+              test_dir=$(mktemp -d "$RUNNER_TEMP/netix-runtime.XXXXXX")
+              echo "::group::$("$interpreter" --version)"
+              "$interpreter" -m venv "$test_dir/venv"
               export PATH="$test_dir/venv/bin:$PATH"
               python -m pip wheel --no-deps --wheel-dir "$test_dir/dist" .
               python -m pip install --no-deps "$test_dir"/dist/*.whl
               python -I -m unittest discover -s tests
               python -m unittest discover -s runtime/host_manager -p 'test_*.py'
               netix-runtime-supervisor --help
+              if [[ "$interpreter" == "$PY314" ]]; then
+                printf 'wheel-dir=%s\n' "$test_dir/dist" >> "$GITHUB_OUTPUT"
+              fi
+              echo "::endgroup::"
             )
-            if [[ "$interpreter" == "$PY314" ]]; then
-              printf 'wheel-dir=%s\n' "$test_dir/dist" >> "$GITHUB_OUTPUT"
-            fi
-            echo "::endgroup::"
           done
       - uses: actions/upload-artifact@v4
         if: startsWith(github.ref, 'refs/tags/v')
