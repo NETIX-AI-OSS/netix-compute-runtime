@@ -9,7 +9,7 @@ permissions:
   contents: read
 concurrency:
   group: runtime-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   audit:
     runs-on:
@@ -49,26 +49,61 @@ jobs:
     runs-on:
       group: e2e-worker
       labels: [build-only]
-    strategy:
-      matrix:
-        python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: actions/setup-python@v6
+        id: py311
         with:
-          python-version: ${{ matrix.python }}
-      - run: python -m pip wheel --no-deps --wheel-dir dist .
-      - run: python -m pip install --no-deps dist/*.whl
-      - run: python -I -m unittest discover -s tests
-      - run: python -m unittest discover -s runtime/host_manager -p 'test_*.py'
-      - run: netix-runtime-supervisor --help
+          python-version: '3.11'
+          update-environment: false
+      - uses: actions/setup-python@v6
+        id: py312
+        with:
+          python-version: '3.12'
+          update-environment: false
+      - uses: actions/setup-python@v6
+        id: py313
+        with:
+          python-version: '3.13'
+          update-environment: false
+      - uses: actions/setup-python@v6
+        id: py314
+        with:
+          python-version: '3.14'
+          update-environment: false
+      - name: Exercise the wheel on each supported Python
+        id: compatibility
+        shell: bash
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+          PY312: ${{ steps.py312.outputs.python-path }}
+          PY313: ${{ steps.py313.outputs.python-path }}
+          PY314: ${{ steps.py314.outputs.python-path }}
+        run: |
+          for interpreter in "$PY311" "$PY312" "$PY313" "$PY314"; do
+            test_dir=$(mktemp -d "$RUNNER_TEMP/netix-runtime.XXXXXX")
+            echo "::group::$("$interpreter" --version)"
+            "$interpreter" -m venv "$test_dir/venv"
+            (
+              export PATH="$test_dir/venv/bin:$PATH"
+              python -m pip wheel --no-deps --wheel-dir "$test_dir/dist" .
+              python -m pip install --no-deps "$test_dir"/dist/*.whl
+              python -I -m unittest discover -s tests
+              python -m unittest discover -s runtime/host_manager -p 'test_*.py'
+              netix-runtime-supervisor --help
+            )
+            if [[ "$interpreter" == "$PY314" ]]; then
+              printf 'wheel-dir=%s\n' "$test_dir/dist" >> "$GITHUB_OUTPUT"
+            fi
+            echo "::endgroup::"
+          done
       - uses: actions/upload-artifact@v4
-        if: matrix.python == '3.14' && startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: runtime-wheel
-          path: dist/*.whl
+          path: ${{ steps.compatibility.outputs.wheel-dir }}/*.whl
           retention-days: 3
   image:
     needs: [audit, tests]
